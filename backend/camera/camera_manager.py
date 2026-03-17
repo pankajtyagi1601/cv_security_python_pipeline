@@ -3,7 +3,7 @@ import threading
 from camera.camera_stream import run_camera
 
 def start_cameras(camera_list):
-    threads = []
+    print(f"Starting {len(camera_list)} camera(s)...")
     
     for camera in camera_list:
         
@@ -15,9 +15,4 @@ def start_cameras(camera_list):
         
         t.start()
         
-        threads.append(t)
-        
-        print(f"Started camera: {camera['id']}")
-
-        
-    return threads
+        print(f"Started: {camera['id']} on source {camera['source']}")
