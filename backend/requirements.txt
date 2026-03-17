@@ -1,0 +1,8 @@
+opencv-python
+face-recognition
+numpy
+pymongo
+python-dotenv
+cloudinary
+redis
+requests
