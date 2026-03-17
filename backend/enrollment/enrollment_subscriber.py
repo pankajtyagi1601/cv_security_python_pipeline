@@ -1,3 +1,4 @@
+# enrollment/enrollment_subscriber.py
 import threading
 import json
 from messaging.redis_client import get_redis
@@ -37,14 +38,14 @@ def listen_for_enrollments():
             payload = json.loads(message["data"])
             
             name = payload.get("name")
-            img_url = payload.get("image_url")
+            image_url = payload.get("image_url")
             
-            if not name or not img_url:
+            if not name or not image_url:
                 print(f"[Enrollment] Invalid payload: {payload}")
                 continue
             
             # Process the enrollment - download, encode, save to DB
-            success, msg = process_enrollment(name, img_url)
+            success, msg = process_enrollment(name, image_url)
             
             if success:
                 print(f"[Enrollment] Success: {msg}")

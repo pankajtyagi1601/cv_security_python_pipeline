@@ -1,10 +1,11 @@
+#  enrollment/enrollment_processor.py
 import requests
 import numpy as np
 import face_recognition
 import cv2
 from storage.database import save_authorized_people
 
-def process_enrollment(name, img_url):
+def process_enrollment(name, image_url):
     """ What this function does?
     Downloads image from Cloudinary, computes 128D face encoding, then saves to MongoDB authorized_people collection.
     Returns (success: bool, message: str)
@@ -14,7 +15,7 @@ def process_enrollment(name, img_url):
     
     # ── Step 1: Download image from Cloudinary ──────────────
     try:
-        response = requests.get(img_url, timeout=10)
+        response = requests.get(image_url, timeout=10)
         response.raise_for_status()
     except Exception as e:
         return False, f"Failed to download image for {name}: {e}"
@@ -43,10 +44,10 @@ def process_enrollment(name, img_url):
         return False, f"Multiple faces detected in image for '{name}' - please upload a solo photo"
     
     # Convert numpy array → plain Python list for MongoDB storage
-    encodings = encodings[0].tolist()
+    encoding = encodings[0].tolist()
     
     # ── Step 4: Save to MongoDB ──────────────────────────────
-    save_authorized_people(name, img_url, encodings)
+    save_authorized_people(name, image_url, encoding)
     
     print(f"[Enrollment] Done: {name}")
     return True, f"{name} enrolled successfully"

@@ -8,7 +8,7 @@ from storage.cloudinary_upload import upload_image
 from storage.database import log_event
 from events.event_queue import event_queue 
 
-def workder():
+def worker():
     print("Event worker started")
 
     while True:
@@ -17,7 +17,7 @@ def workder():
         
         try:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            temp_file = f"{event_type}_{timestamp}.jpg"
+            temp_file = f"temp_{camera_id}_{event_type}_{timestamp}.jpg"
         
             # Save face crop disk temporarily
             cv2.imwrite(temp_file, frame)
@@ -41,5 +41,5 @@ def workder():
             event_queue.task_done()
         
 def start_event_worker():
-    thread = threading.Thread(target=workder, daemon= True)
+    thread = threading.Thread(target=worker, daemon= True)
     thread.start()

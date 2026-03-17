@@ -1,3 +1,4 @@
+# storage/databse/py
 from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ import os
 load_dotenv()
 
 # Single Client instance - reused across all operations
-client = MongoClient(os.get("MONGO_URI"))
+client = MongoClient(os.getenv("MONGO_URI"))
 db = client['cv_security']
 
 events_collection = db["events"]

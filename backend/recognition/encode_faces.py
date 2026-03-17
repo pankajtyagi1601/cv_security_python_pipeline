@@ -1,3 +1,4 @@
+# recognition/encode_faces.py
 import face_recognition
 import os
 import pickle
@@ -24,10 +25,10 @@ def encode_faces(images_folder="known_faces"):
         names.append(name)
         print(f"Encoded: {name}")
         
-        with open("encoding.pkl", "wb") as f:
-            pickle.dump({"encoding": encodings, "names": names}, f)
+    with open("encoding.pkl", "wb") as f:
+        pickle.dump({"encoding": encodings, "names": names}, f)
             
-        print(f"Done. {len(name)} faces encoded.")
+    print(f"Done. {len(names)} faces encoded.")
         
 if __name__ == "__main__":
     encode_faces()
