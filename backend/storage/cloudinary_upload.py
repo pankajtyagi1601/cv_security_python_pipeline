@@ -17,8 +17,12 @@ cloudinary.config(
 )
 
 def upload_image(image_path):
+    """
+    Takes a local file path, uploads to Cloudinary.
+    Returns a permanent public HTTPS URL.
+    """
     result = cloudinary.uploader.upload(
         image_path,
-        folder="cv_security_db"
+        folder="cv_security_events"
     )
     return result["secure_url"]
