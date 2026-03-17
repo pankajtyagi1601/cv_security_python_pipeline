@@ -5,10 +5,10 @@ PROCESS_EVERY_N_FRAMES = 2   # only run recognition on every 2nd frame
 ENCODING_RELOAD_INTERVAL = 300  # reload known faces from DB every 5 minutes
 
 CAMERAS = [
-    {
-        "id": "CAM_01",
-        "source": 0
-    },
+    # {
+    #     "id": "CAM_01",
+    #     "source": 0
+    # },
     {
         "id": "CAM_02",
         "source": 1

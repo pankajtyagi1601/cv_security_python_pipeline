@@ -85,4 +85,9 @@ def run_camera(camera_id, source):
                 if now - last_seen.get(name, 0) > AUTHORIZED_COOLDOWN:
                     event_queue.put(("AUTHORIZED", face_img, name, camera_id))
                     last_seen[name] = now
+    
+        cv2.imshow(camera_id, frame)
+        # Press 'q' to quit this camera window
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
         

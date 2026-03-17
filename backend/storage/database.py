@@ -5,11 +5,17 @@ from dotenv import load_dotenv
 import datetime
 import numpy as np
 import os
+import certifi
 
 load_dotenv()
 
 # Single Client instance - reused across all operations
-client = MongoClient(os.getenv("MONGO_URI"))
+client = MongoClient(
+    os.getenv("MONGO_URI"),
+    tls=True,
+    tlsCAFile=certifi.where(),
+    )
+
 db = client['cv_security']
 
 events_collection = db["events"]
