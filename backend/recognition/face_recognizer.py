@@ -1,7 +1,24 @@
 # recognition/face_recognizer.py
+import threading
 import face_recognition
 import numpy as np
 from storage.database import load_known_faces_from_db
+
+# ─── Thread Safety Lock ────────────────────────────────────────────────────────
+#
+# PROBLEM: dlib (the C++ library powering face_recognition) is NOT thread-safe.
+# Multiple threads calling face_recognition functions simultaneously causes a
+# memory conflict that silently crashes the entire Python process on Windows.
+#
+# SOLUTION: A threading.Lock() acts as a single-key room — only ONE thread can
+# run dlib code at a time. Other threads wait at the "with dlib_lock:" line
+# until the current thread finishes and releases the lock.
+#
+# WHY defined here (not in main.py or enrollment_processor.py):
+# This module is imported by BOTH camera_stream.py and enrollment_processor.py.
+# Defining the lock here means both files share the EXACT same lock object.
+# If each file created its own lock, they'd be independent — no protection.
+dlib_lock = threading.Lock()
 
 def load_known_faces():
     
@@ -12,9 +29,13 @@ def load_known_faces():
 def recognize_faces(frame, known_encodings, known_names):
     
     # Takes an RGB frame + known face data. Returns face locations and matched names.
-    
-    locations = face_recognition.face_locations(frame, model="hog")
-    encodings = face_recognition.face_encodings(frame, locations)
+    # Acquire the lock before ANY dlib call.
+    # If enrollment_processor is currently encoding a face, camera threads
+    # will pause here (~50ms max) until encoding finishes — then continue.
+    # This tiny pause is invisible in practice but prevents the crash.
+    with dlib_lock:  # camera threads wait here if encoding is running
+        locations = face_recognition.face_locations(frame, model="hog")
+        encodings = face_recognition.face_encodings(frame, locations)
     
     names = []
     

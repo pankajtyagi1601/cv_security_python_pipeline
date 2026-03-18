@@ -3,6 +3,7 @@ import threading
 import json
 from messaging.redis_client import get_redis
 from enrollment.enrollment_processor import process_enrollment
+import traceback
 
 ENROLLMENT_CHANNEL = "enrollment_channel"
 
@@ -57,11 +58,12 @@ def listen_for_enrollments():
         
         except Exception as e:
             print(f"[Enrollment] Unexpected error: {e}")
+            traceback.print_exc()
             
 def start_enrollment_subscriber():
     thread = threading.Thread(
         target=listen_for_enrollments,
-        daemon=True
+        daemon=False
     )
     thread.start()
     print("[Enrollment] Subscriber thread started")
