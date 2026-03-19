@@ -3,10 +3,16 @@ import datetime
 import cv2
 import os
 import threading
-
+import glob
 from storage.cloudinary_upload import upload_image
 from storage.database import log_event
 from events.event_queue import event_queue 
+
+def cleanup_temp_files():
+    temp_files = glob.glob("temp_*.jpg")
+    for file in temp_files:
+        os.remove(file)
+        print(f"Cleaned up temp file: {file}")
 
 def worker():
     print("Event worker started")
