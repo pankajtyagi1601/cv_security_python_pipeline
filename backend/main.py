@@ -5,8 +5,10 @@ from events.event_worker import start_event_worker
 from enrollment.enrollment_subscriber import start_enrollment_subscriber
 from enrollment.enrollment_pending_recover import recover_pending_enrollments
 from storage.database import load_cameras_from_db
-from config import *
+from config import validate_env
 import time
+
+validate_env()  # Ensure all required environment variables are set before starting any services
 
 if __name__ == "__main__":
     print("=" * 40)
