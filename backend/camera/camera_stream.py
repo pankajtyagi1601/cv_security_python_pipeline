@@ -6,7 +6,7 @@ from recognition.face_recognizer import recognize_faces, load_known_faces, check
 from events.event_queue import event_queue
 from config import *
 
-
+RECONNECT_AFTER = 30  # consecutive failed frames before attempting reconnect
 # To start integrated camera
 # def start_camera(index=1):
     
@@ -16,6 +16,16 @@ from config import *
 #         raise Exception("Cannot open camera")
     
 #     return cap
+
+def _open_capture(source):
+    """Open the right capture backend based on source type"""
+    if isinstance(source, int):
+        cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)   # local webcam on Windows
+    else:
+        cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)  # RTSP / HTTP stream
+
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # always keep buffer minimal
+    return cap
 
 def run_camera(camera_id, source, stop_flag: threading.Event):
     print(f"[{camera_id}] Starting...")
@@ -27,13 +37,11 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
     last_seen     = {}   # {name: last_event_timestamp} — per-person cooldown
     frame_count   = 0
 
+    # Convert "0" / "1" string from MongoDB → int for OpenCV
     if isinstance(source, str) and source.isdigit():
         source = int(source)
         
-    if isinstance(source, int):
-        cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)
-    else:
-        cap = cv2.VideoCapture(source)  # RTSP URL — no backend flag needed
+    cap = _open_capture(source)
 
     
     if not cap.isOpened():
@@ -46,9 +54,18 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
         ret, frame = cap.read()
         
         if not ret:
-            print(f"[{camera_id}] Frame read failed — retrying...")
-            time.sleep(0.1)
+            fail_count += 1
+            if fail_count >= RECONNECT_AFTER:
+                print(f"[{camera_id}] Stream lost — reconnecting...")
+                cap.release()
+                time.sleep(2)
+                cap = _open_capture(source)
+                fail_count = 0
+            else:
+                time.sleep(0.1)
             continue
+        
+        fail_count = 0  # reset on successful frame
         
         # ── Hot reload ──────────────────────────────────────
         # Picks up newly enrolled people without restarting
