@@ -20,6 +20,7 @@ db = client['cv_security']
 
 events_collection = db["events"]
 people_collection = db["authorized_people"]
+cameras_collection = db["cameras"]
 
 # -----------------------Events-----------------------
 
@@ -60,3 +61,26 @@ def load_known_faces_from_db():
     
     print(f"Loaded {len(people)} authorized people: {names}")
     return np.array(encodings), names
+
+# -----------------------Cameras-----------------------
+def load_cameras_from_db():
+    """Called by main.py on startup instead of reading config.py"""
+    cameras = list(cameras_collection.find({"active": True}))
+
+    if not cameras:
+        print("Warning: No cameras found in DB. Add cameras from the dashboard.")
+        return []
+
+    result = []
+    for cam in cameras:
+        result.append({
+            "id":     cam["camera_id"],
+            "source": cam["source"]
+        })
+        print(f"Loaded camera: {cam['camera_id']} → {cam['source']}")
+
+    return result
+
+def get_active_camera_count():
+    """How many camera threads are currently configured"""
+    return cameras_collection.count_documents({"active": True})

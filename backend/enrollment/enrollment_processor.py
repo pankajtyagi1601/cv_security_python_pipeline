@@ -4,8 +4,8 @@ import numpy as np
 import face_recognition
 import cv2
 import traceback
-from storage.database import save_authorized_people
-from recognition.face_recognizer import dlib_lock
+from storage.database import save_authorized_people, get_active_camera_count
+from recognition.face_recognizer import dlib_lock, signal_reload
 
 def process_enrollment(name, image_url):
     """ What this function does?
@@ -67,6 +67,11 @@ def process_enrollment(name, image_url):
     # ── Step 4: Save to MongoDB ──────────────────────────────
     try:
         save_authorized_people(name, image_url, encoding)
+        
+        # ✅ Signal all camera threads to reload encodings immediately
+        num_cameras = get_active_camera_count()
+        signal_reload(num_cameras)
+        print(f"[Enrollment] Done: {name} — cameras notified to reload")
     except Exception as e:
         traceback.print_exc()
         return False, f"Database save failed: {e}"

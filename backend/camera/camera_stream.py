@@ -1,7 +1,7 @@
 # camera/camera_stream.py
 import cv2
 import time
-from recognition.face_recognizer import recognize_faces, load_known_faces
+from recognition.face_recognizer import recognize_faces, load_known_faces, check_and_reload
 from events.event_queue import event_queue
 from config import *
 
@@ -26,7 +26,14 @@ def run_camera(camera_id, source):
     last_seen     = {}   # {name: last_event_timestamp} — per-person cooldown
     frame_count   = 0
 
-    cap = cv2.VideoCapture(source)
+    if isinstance(source, str) and source.isdigit():
+        source = int(source)
+        
+    if isinstance(source, int):
+        cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)
+    else:
+        cap = cv2.VideoCapture(source)  # RTSP URL — no backend flag needed
+
     
     if not cap.isOpened():
         print(f"[{camera_id}] ERROR: Cannot open camera source {source}")
@@ -43,8 +50,16 @@ def run_camera(camera_id, source):
         # ── Hot reload ──────────────────────────────────────
         # Picks up newly enrolled people without restarting
         
-        if time.time() - last_reload > ENCODING_RELOAD_INTERVAL:
-            print(f"[{camera_id}] Reloading encodings from DB...")
+        # check_and_reload() returns True if the reload_counter is set to a 1, indicating that new enrollments have been processed and the camera should reload its known faces.
+        if check_and_reload():
+            print(f"[{camera_id}] New enrollment detected — reloading encodings...")
+            known_encodings, known_names = load_known_faces()
+            last_reload = time.time()
+            # Don't clear the flag here — let ALL camera threads reload first
+
+        # Fallback timer reload — catches any edge cases
+        elif time.time() - last_reload > ENCODING_RELOAD_INTERVAL:
+            print(f"[{camera_id}] Scheduled reload — reloading encodings...")
             known_encodings, known_names = load_known_faces()
             last_reload = time.time()
             
