@@ -40,6 +40,16 @@ def listen_for_enrollments():
             # e.g. '{"name": "Rahul", "image_url": "https://cloudinary..."}'
             payload = json.loads(message["data"])
             
+            # ── Handle reload signal (triggered when person is deleted) ──
+            if payload.get("action") == "reload_encodings":
+                from storage.database import get_active_camera_count
+                from recognition.face_recognizer import signal_reload
+                num_cameras = get_active_camera_count()
+                signal_reload(num_cameras)
+                logger.info("[Enrollment] Encoding reload triggered by dashboard")
+                continue
+            
+            # ── Handle new enrollment ────────────────────────────────────
             name = payload.get("name")
             image_url = payload.get("image_url")
             
