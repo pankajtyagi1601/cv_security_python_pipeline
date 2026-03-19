@@ -6,6 +6,7 @@ import cv2
 import traceback
 from storage.database import save_authorized_people, get_active_camera_count
 from recognition.face_recognizer import dlib_lock, signal_reload
+from utils.logger import logger
 
 def process_enrollment(name, image_url):
     """ What this function does?
@@ -13,7 +14,7 @@ def process_enrollment(name, image_url):
     Returns (success: bool, message: str)
     """
     
-    print(f"[Enrollment] Processing: {name}")
+    logger.info(f"[Enrollment] Processing: {name}")
     # print(f"[Enrollment] Step 1 — downloading image for {name}")
     
     # ── Step 1: Download image from Cloudinary ──────────────
@@ -22,7 +23,7 @@ def process_enrollment(name, image_url):
         response.raise_for_status()
         # print(f"[Enrollment] Step 1 done — {len(response.content)} bytes downloaded")
     except Exception as e:
-        traceback.print_exc()
+        logger.error(f"[Enrollment] Download failed for {name}: {e}")
         return False, f"Failed to download image for {name}: {e}"
     
     # ── Step 2: Decode bytes → numpy array ──────────────────
@@ -41,7 +42,7 @@ def process_enrollment(name, image_url):
         # face_recognition expects RGB, OpenCV gives BGR
         rgb_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
     except Exception as e:
-        traceback.print_exc()
+        logger.error(f"[Enrollment] Decode failed for {name}: {e}")
         return False, f"Image decode failed: {e}"
    
     # ── Step 3: Compute 128D encoding ───────────────────────
@@ -61,20 +62,19 @@ def process_enrollment(name, image_url):
         encoding = encodings[0].tolist()
         
     except Exception as e:
-        traceback.print_exc()
+        logger.error(f"[Enrollment] Encoding failed for {name}: {e}", exc_info=True)
         return False, f"Face encoding failed: {e}"
     
     # ── Step 4: Save to MongoDB ──────────────────────────────
     try:
         save_authorized_people(name, image_url, encoding)
         
-        # ✅ Signal all camera threads to reload encodings immediately
+        # Signal all camera threads to reload encodings immediately
         num_cameras = get_active_camera_count()
         signal_reload(num_cameras)
-        print(f"[Enrollment] Done: {name} — cameras notified to reload")
+        logger.info(f"[Enrollment] Done: {name} — cameras notified to reload")
     except Exception as e:
-        traceback.print_exc()
+        logger.error(f"[Enrollment] Database save failed for {name}: {e}", exc_info=True)
         return False, f"Database save failed: {e}"
     
-    print(f"[Enrollment] Done: {name}")
     return True, f"{name} enrolled successfully"

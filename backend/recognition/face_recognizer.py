@@ -1,4 +1,5 @@
 # recognition/face_recognizer.py
+from utils.logger import logger
 import threading
 import face_recognition
 import numpy as np
@@ -20,7 +21,7 @@ from storage.database import load_known_faces_from_db
 # If each file created its own lock, they'd be independent — no protection.
 dlib_lock = threading.Lock()
 
-# ✅ Shared flag — enrollment worker sets this after saving a new person
+#  Shared flag — enrollment worker sets this after saving a new person
 # Camera threads check this and reload immediately instead of waiting for the next periodic reload
 reload_lock = threading.Lock()
 reload_counter = [0]  # Mutable counter to track reloads (for debugging/logging)
@@ -29,7 +30,7 @@ def signal_reload(num_cameras=1):
     """Called by enrollment_processor after saving to DB"""
     with reload_lock:
         reload_counter[0] = num_cameras
-        print(f"[Reload] Signal sent to {num_cameras} camera thread(s)")
+        logger.info(f"[Reload] Signal sent to {num_cameras} camera thread(s)")
 
 
 def check_and_reload():

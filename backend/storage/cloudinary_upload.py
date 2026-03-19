@@ -1,4 +1,5 @@
 # storage/cloudinary_upload.py
+from utils.logger import logger
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
@@ -43,16 +44,16 @@ def upload_with_retry(image_path, retries=3):
         try:
             url = upload_image(image_path)
             if attempt > 0:
-                print(f"Upload succeeded on attempt {attempt + 1}")
+                logger.info(f"Upload succeeded on attempt {attempt + 1}")
             return url
 
         except Exception as e:
             last_exception = e
             wait = 2 ** attempt  # 1s, 2s, 4s
-            print(f"Upload attempt {attempt + 1}/{retries} failed: {e}")
+            logger.error(f"Upload attempt {attempt + 1}/{retries} failed: {e}")
 
             if attempt < retries - 1:
-                print(f"Retrying in {wait}s...")
+                logger.info(f"Retrying in {wait}s...")
                 time.sleep(wait)
 
     # All retries exhausted

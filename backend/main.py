@@ -6,14 +6,15 @@ from enrollment.enrollment_subscriber import start_enrollment_subscriber
 from enrollment.enrollment_pending_recover import recover_pending_enrollments
 from storage.database import load_cameras_from_db
 from config import validate_env
+from utils.logger import logger
 import time
 
 validate_env()  # Ensure all required environment variables are set before starting any services
 
 if __name__ == "__main__":
-    print("=" * 40)
-    print("  CV Security  — Starting up")
-    print("=" * 40)
+    logger.info("=" * 40)
+    logger.info("  CV Security  — Starting up")
+    logger.info("=" * 40)
     
     cleanup_temp_files()  # Clean up any leftover temp files from previous runs on startup
     start_event_worker()
@@ -23,15 +24,15 @@ if __name__ == "__main__":
     cameras = load_cameras_from_db()
     
     if not cameras:
-        print("No cameras configured — add cameras from the dashboard then restart.")
+        logger.info("No cameras configured — add cameras from the dashboard then restart.")
     else:
         start_cameras(cameras)
         
     recover_pending_enrollments()
     
-    print("=" * 40)
-    print("  All systems running  ")
-    print("=" * 40)
+    logger.info("=" * 40)
+    logger.info("  All systems running  ")
+    logger.info("=" * 40)
 
     while True:
         time.sleep(1)

@@ -1,6 +1,6 @@
 # storage/databse/py
 from pymongo import MongoClient
-from bson import ObjectId
+from utils.logger import logger
 from dotenv import load_dotenv
 import datetime
 import numpy as np
@@ -53,13 +53,13 @@ def load_known_faces_from_db():
     people = list(people_collection.find({}))
     
     if not people:
-        print("Warning: NO authorized people found in the database. All faces will be treated as UNKNOWN.")
+        logger.warning("Warning: NO authorized people found in the database. All faces will be treated as UNKNOWN.")
         return np.array([]), []
     
     encodings = [np.array(p["encoding"]) for p in people]
     names = [p["name"] for p in people]
     
-    print(f"Loaded {len(people)} authorized people: {names}")
+    logger.info(f"Loaded {len(people)} authorized people: {names}")
     return np.array(encodings), names
 
 # -----------------------Cameras-----------------------
@@ -68,7 +68,7 @@ def load_cameras_from_db():
     cameras = list(cameras_collection.find({"active": True}))
 
     if not cameras:
-        print("Warning: No cameras found in DB. Add cameras from the dashboard.")
+        logger.warning("Warning: No cameras found in DB. Add cameras from the dashboard.")
         return []
 
     result = []
@@ -77,7 +77,7 @@ def load_cameras_from_db():
             "id":     cam["camera_id"],
             "source": cam["source"]
         })
-        print(f"Loaded camera: {cam['camera_id']} → {cam['source']}")
+        logger.info(f"Loaded camera: {cam['camera_id']} → {cam['source']}")
 
     return result
 

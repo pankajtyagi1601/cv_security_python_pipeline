@@ -6,16 +6,17 @@ import threading
 import glob
 from storage.cloudinary_upload import upload_with_retry
 from storage.database import log_event
-from events.event_queue import event_queue 
+from events.event_queue import event_queue
+from utils import logger 
 
 def cleanup_temp_files():
     temp_files = glob.glob("temp_*.jpg")
     for file in temp_files:
         os.remove(file)
-        print(f"Cleaned up temp file: {file}")
+        logger.info(f"Cleaned up temp file: {file}")
 
 def worker():
-    print("Event worker started")
+    logger.info("Event worker started")
 
     while True:
         # Blocks here — zero CPU usage until an event arrives
@@ -39,14 +40,14 @@ def worker():
             # Log to MongoDB
             log_event(timestamp, name, image_url, camera_id, event_type)
             
-            print(f"Event logged: {event_type} | {name} | {camera_id}")
+            logger.info(f"Event logged: {event_type} | {name} | {camera_id}")
         
         except Exception as e:
-            print(f"Event worker error: {e}")
+            logger.error(f"Event worker error: {e}")
             # clean up temp file if upload failed
             if temp_file and os.path.exists(temp_file):
                 os.remove(temp_file)
-                print(f"Cleaned up failed temp file: {temp_file}")
+                logger.warning(f"Cleaned up failed temp file: {temp_file}")
         
         finally:
             # Always mark done even if something failed

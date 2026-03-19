@@ -5,6 +5,7 @@ import threading
 from recognition.face_recognizer import recognize_faces, load_known_faces, check_and_reload
 from events.event_queue import event_queue
 from config import *
+from utils.logger import logger
 
 RECONNECT_AFTER = 30  # consecutive failed frames before attempting reconnect
 # To start integrated camera
@@ -28,7 +29,7 @@ def _open_capture(source):
     return cap
 
 def run_camera(camera_id, source, stop_flag: threading.Event):
-    print(f"[{camera_id}] Starting...")
+    logger.info(f"[{camera_id}] Starting...")
 
     # Load known faces once at startup
     known_encodings, known_names = load_known_faces()
@@ -45,10 +46,10 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
 
     
     if not cap.isOpened():
-        print(f"[{camera_id}] ERROR: Cannot open camera source {source}")
+        logger.error(f"[{camera_id}] ERROR: Cannot open camera source {source}")
         return
     
-    print(f"[{camera_id}] Camera opened successfully")
+    logger.info(f"[{camera_id}] Camera opened successfully")
     
     while not stop_flag.is_set():
         ret, frame = cap.read()
@@ -56,7 +57,7 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
         if not ret:
             fail_count += 1
             if fail_count >= RECONNECT_AFTER:
-                print(f"[{camera_id}] Stream lost — reconnecting...")
+                logger.warning(f"[{camera_id}] Stream lost — reconnecting...")
                 cap.release()
                 time.sleep(2)
                 cap = _open_capture(source)
@@ -72,14 +73,14 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
         
         # check_and_reload() returns True if the reload_counter is set to a 1, indicating that new enrollments have been processed and the camera should reload its known faces.
         if check_and_reload():
-            print(f"[{camera_id}] New enrollment detected — reloading encodings...")
+            logger.info(f"[{camera_id}] New enrollment detected — reloading encodings...")
             known_encodings, known_names = load_known_faces()
             last_reload = time.time()
             # Don't clear the flag here — let ALL camera threads reload first
 
         # Fallback timer reload — catches any edge cases
         elif time.time() - last_reload > ENCODING_RELOAD_INTERVAL:
-            print(f"[{camera_id}] Scheduled reload — reloading encodings...")
+            logger.info(f"[{camera_id}] Scheduled reload — reloading encodings...")
             known_encodings, known_names = load_known_faces()
             last_reload = time.time()
             
@@ -128,5 +129,5 @@ def run_camera(camera_id, source, stop_flag: threading.Event):
     
     # Clean exit
     cap.release()
-    print(f"[{camera_id}] Stopped.")
+    logger.info(f"[{camera_id}] Stopped.")
         

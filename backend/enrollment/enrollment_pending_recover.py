@@ -1,5 +1,7 @@
 # enrollment/enrollment_pending_recover.py
 
+from utils.logger import logger
+
 from storage.database import db
 from enrollment.enrollment_processor import process_enrollment
 
@@ -11,7 +13,7 @@ def recover_pending_enrollments():
     if not pending:
         return
 
-    print(f"[Recovery] Found {len(pending)} unprocessed enrollment(s) — processing now...")
+    logger.info(f"[Recovery] Found {len(pending)} unprocessed enrollment(s) — processing now...")
 
     for job in pending:
         name      = job["name"]
@@ -23,10 +25,10 @@ def recover_pending_enrollments():
                 {"_id": job["_id"]},
                 {"$set": {"status": "completed"}}
             )
-            print(f"[Recovery] Completed: {msg}")
+            logger.info(f"[Recovery] Completed: {msg}")
         else:
             db["enrollment_jobs"].update_one(
                 {"_id": job["_id"]},
                 {"$set": {"status": "failed", "error": msg}}
             )
-            print(f"[Recovery] Failed: {msg}")
+            logger.error(f"[Recovery] Failed: {msg}")

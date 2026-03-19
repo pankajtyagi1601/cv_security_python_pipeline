@@ -5,6 +5,8 @@ from messaging.redis_client import get_redis
 from enrollment.enrollment_processor import process_enrollment
 import traceback
 
+from utils.logger import logger
+
 ENROLLMENT_CHANNEL = "enrollment_channel"
 
 def listen_for_enrollments():
@@ -22,7 +24,7 @@ def listen_for_enrollments():
     
     # Tell Redis: "I want to receive messages on this channel"
     pubsub.subscribe(ENROLLMENT_CHANNEL)
-    print(f"[Enrollment] Subscribed to channel: {ENROLLMENT_CHANNEL}")
+    logger.info(f"[Enrollment] Subscribed to channel: {ENROLLMENT_CHANNEL}")
     
     # listen() blocks here — Python sleeps until a message arrives
     # When Next.js publishes → this loop wakes up with the message
@@ -42,22 +44,22 @@ def listen_for_enrollments():
             image_url = payload.get("image_url")
             
             if not name or not image_url:
-                print(f"[Enrollment] Invalid payload: {payload}")
+                logger.warning(f"[Enrollment] Invalid payload: {payload}")
                 continue
             
             # Process the enrollment - download, encode, save to DB
             success, msg = process_enrollment(name, image_url)
             
             if success:
-                print(f"[Enrollment] Success: {msg}")
+                logger.info(f"[Enrollment] Success: {msg}")
             else:
-                print(f"[Enrollment] Failed: {msg}")
+                logger.error(f"[Enrollment] Failed: {msg}")
         
         except json.JSONDecodeError:
-            print(f"[Enrollment] Could not parse message: {message['data']}")
+            logger.error(f"[Enrollment] Could not parse message: {message['data']}")
         
         except Exception as e:
-            print(f"[Enrollment] Unexpected error: {e}")
+            logger.error(f"[Enrollment] Unexpected error: {e}")
             traceback.print_exc()
             
 def start_enrollment_subscriber():
@@ -66,4 +68,4 @@ def start_enrollment_subscriber():
         daemon=False
     )
     thread.start()
-    print("[Enrollment] Subscriber thread started")
+    logger.info("[Enrollment] Subscriber thread started")

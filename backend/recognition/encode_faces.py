@@ -1,4 +1,6 @@
 # recognition/encode_faces.py
+from utils.logger import logger
+
 import face_recognition
 import os
 import pickle
@@ -18,17 +20,17 @@ def encode_faces(images_folder="known_faces"):
         face_encodings = face_recognition.face_encodings(image)
         
         if len(face_encodings) == 0:
-            print(f"Warning: No face found in {filename}, skipping.")
+            logger.warning(f"Warning: No face found in {filename}, skipping.")
             continue
         
         encodings.append(face_encodings[0])
         names.append(name)
-        print(f"Encoded: {name}")
+        logger.info(f"Encoded: {name}")
         
     with open("encoding.pkl", "wb") as f:
         pickle.dump({"encoding": encodings, "names": names}, f)
             
-    print(f"Done. {len(names)} faces encoded.")
+    logger.info(f"Done. {len(names)} faces encoded.")
         
 if __name__ == "__main__":
     encode_faces()

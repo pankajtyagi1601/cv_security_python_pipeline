@@ -1,12 +1,13 @@
 # camera/camera_manager.py
 import threading
 from camera.camera_stream import run_camera
+from utils.logger import logger
 
 _active_cameras: dict[str, threading.Event] = {}
 _lock = threading.Lock()
 
 def start_cameras(camera_list):
-    print(f"Starting {len(camera_list)} camera(s)...")
+    logger.info(f"Starting {len(camera_list)} camera(s)...")
     
     for camera in camera_list:
         _start_camera(camera["id"], camera["source"])
@@ -17,7 +18,7 @@ def _start_camera(camera_id, source):
     
     with _lock:
         if camera_id in _active_cameras:
-            print(f"{camera_id} Already running - skipping.")
+            logger.warning(f"{camera_id} Already running - skipping.")
             return
         
         stop_flag = threading.Event()
@@ -30,7 +31,7 @@ def _start_camera(camera_id, source):
     )
     
     thread.start()
-    print(f"{camera_id} Started on source {source}")
+    logger.info(f"{camera_id} Started on source {source}")
     
 def stop_camera(camera_id):
     """Signal a specific camera thread to stop."""
@@ -40,9 +41,9 @@ def stop_camera(camera_id):
         
     if flag:
         flag.set() # Signal the thread to exit on next frame
-        print(f"{camera_id} Stop signal sent.")
+        logger.info(f"{camera_id} Stop signal sent.")
     else:
-        print(f"{camera_id} Not found among active cameras.")
+        logger.warning(f"{camera_id} Not found among active cameras.")
         
 def add_camera(camera_id, source):
     """Called by camera_subscriber when admins add a new camera."""

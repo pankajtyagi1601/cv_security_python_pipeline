@@ -2,6 +2,7 @@ import threading
 import json
 import traceback
 from messaging.redis_client import get_redis
+from utils.logger import logger
 
 CAMERA_CHANNEL = "camera_channel"
 
@@ -17,7 +18,7 @@ def listen_for_camera_changes():
     pubsub = r.pubsub()
     pubsub.subscribe(CAMERA_CHANNEL)
     
-    print(f"[Camera] Subscribed to channel: {CAMERA_CHANNEL}")
+    logger.info(f"[Camera] Subscribed to channel: {CAMERA_CHANNEL}")
     
     for message in pubsub.listen():
         if message['type'] != "message":
@@ -30,21 +31,21 @@ def listen_for_camera_changes():
             source = payload.get("source")
             
             if action == "add":
-                print(f"[Camera] New camera signal: {camera_id} on source {source}")
+                logger.info(f"[Camera] New camera signal: {camera_id} on source {source}")
                 add_camera(camera_id, source)
                 
             elif action == "remove":
-                print(f"[Camera] Remove camera signal: {camera_id}")
+                logger.info(f"[Camera] Remove camera signal: {camera_id}")
                 stop_camera(camera_id)
             
             else:
-                print(f"[Camera] Unknown action: {action}")
+                logger.warning(f"[Camera] Unknown action: {action}")
         
         except json.JSONDecodeError:
-            print(f"[Camera] Could not parse message: {message['data']}")
+            logger.error(f"[Camera] Could not parse message: {message['data']}")
         
         except Exception as e:
-            print(f"[Camera] Unexpected error: {e}")
+            logger.error(f"[Camera] Unexpected error: {e}")
             traceback.print_exc()
             
 def start_camera_subscriber():
@@ -53,4 +54,4 @@ def start_camera_subscriber():
         daemon=True
     )
     thread.start()
-    print("[Camera] Subscriber thread started.")
+    logger.info("[Camera] Subscriber thread started.")
