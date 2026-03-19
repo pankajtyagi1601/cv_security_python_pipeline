@@ -1,6 +1,7 @@
 # camera/camera_stream.py
 import cv2
 import time
+import threading
 from recognition.face_recognizer import recognize_faces, load_known_faces, check_and_reload
 from events.event_queue import event_queue
 from config import *
@@ -16,7 +17,7 @@ from config import *
     
 #     return cap
 
-def run_camera(camera_id, source):
+def run_camera(camera_id, source, stop_flag: threading.Event):
     print(f"[{camera_id}] Starting...")
 
     # Load known faces once at startup
@@ -38,8 +39,10 @@ def run_camera(camera_id, source):
     if not cap.isOpened():
         print(f"[{camera_id}] ERROR: Cannot open camera source {source}")
         return
-        
-    while True:
+    
+    print(f"[{camera_id}] Camera opened successfully")
+    
+    while not stop_flag.is_set():
         ret, frame = cap.read()
         
         if not ret:
@@ -105,4 +108,8 @@ def run_camera(camera_id, source):
         # # Press 'q' to quit this camera window
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #     break
+    
+    # Clean exit
+    cap.release()
+    print(f"[{camera_id}] Stopped.")
         

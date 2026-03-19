@@ -1,5 +1,6 @@
 import redis
 import os 
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,3 +19,7 @@ redis_client = redis.from_url(
 
 def get_redis():
     return redis_client
+
+def publish(channel, payload: dict):
+    # Publish a dict as a JSON to a Redis channel
+    redis_client.publish(channel, json.dumps(payload))
