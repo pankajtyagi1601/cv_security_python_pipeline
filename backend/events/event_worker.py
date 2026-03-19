@@ -4,7 +4,7 @@ import cv2
 import os
 import threading
 import glob
-from storage.cloudinary_upload import upload_image
+from storage.cloudinary_upload import upload_with_retry
 from storage.database import log_event
 from events.event_queue import event_queue 
 
@@ -20,6 +20,7 @@ def worker():
     while True:
         # Blocks here — zero CPU usage until an event arrives
         event_type, frame, name, camera_id = event_queue.get()
+        temp_file = None
         
         try:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -29,10 +30,11 @@ def worker():
             cv2.imwrite(temp_file, frame)
         
             #Upload to the Cloudinary - get permanent URL
-            image_url = upload_image(temp_file)
+            image_url = upload_with_retry(temp_file)
         
             # Delete temp file immediately
             os.remove(temp_file)
+            temp_file = None  # Avoid trying to delete again in case of error
         
             # Log to MongoDB
             log_event(timestamp, name, image_url, camera_id, event_type)
@@ -41,6 +43,10 @@ def worker():
         
         except Exception as e:
             print(f"Event worker error: {e}")
+            # clean up temp file if upload failed
+            if temp_file and os.path.exists(temp_file):
+                os.remove(temp_file)
+                print(f"Cleaned up failed temp file: {temp_file}")
         
         finally:
             # Always mark done even if something failed
