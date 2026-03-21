@@ -1,0 +1,28 @@
+# Environment
+.env
+
+# Logs
+logs/
+*.log
+
+# Temp files from event worker
+temp_*.jpg
+
+# Face encodings — generated locally, not committed
+encoding.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
