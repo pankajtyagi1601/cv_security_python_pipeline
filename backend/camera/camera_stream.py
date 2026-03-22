@@ -7,6 +7,7 @@ from events.event_queue import event_queue
 from config import *
 from utils.logger import logger
 from streaming.frame_buffer import buffer
+import platform
 
 RECONNECT_AFTER = 30  # consecutive failed frames before attempting reconnect
 ANNOTATION_PERSIST = 2.0
@@ -14,7 +15,11 @@ ANNOTATION_PERSIST = 2.0
 def _open_capture(source):
     """Open the right capture backend based on source type"""
     if isinstance(source, int):
-        cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)   # local webcam on Windows
+        # CAP_DSHOW is Windows only — use default on Linux
+        if platform.system() == "Windows":
+            cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)
+        else:
+            cap = cv2.VideoCapture(source)
     else:
         cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)  # RTSP / HTTP stream
 
