@@ -52,3 +52,8 @@ def add_camera(camera_id, source):
 def get_active_camera_ids():
     with _lock:
         return list(_active_cameras.keys())
+    
+def get_active_camera_count() -> int:
+    """Returns number of currently running camera threads"""
+    with _lock:
+        return len(_active_cameras)

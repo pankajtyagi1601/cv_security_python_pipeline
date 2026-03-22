@@ -7,6 +7,7 @@ from enrollment.enrollment_pending_recover import recover_pending_enrollments
 from storage.database import load_cameras_from_db
 from config import validate_env
 from utils.logger import logger
+from streaming.stream_server import start_stream_server
 import time
 
 validate_env()  # Ensure all required environment variables are set before starting any services
@@ -20,6 +21,7 @@ if __name__ == "__main__":
     start_event_worker()
     start_enrollment_subscriber()
     start_camera_subscriber()  # Start subscriber BEFORE loading cameras — ensures we catch any add/remove signals during startup
+    start_stream_server(port=5000)
     
     cameras = load_cameras_from_db()
     

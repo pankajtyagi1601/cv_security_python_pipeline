@@ -21,6 +21,7 @@ db = client['cv_security']
 events_collection = db["events"]
 people_collection = db["authorized_people"]
 cameras_collection = db["cameras"]
+flags_collection = db["system_flags"]
 
 # -----------------------Events-----------------------
 
@@ -81,6 +82,23 @@ def load_cameras_from_db():
 
     return result
 
-def get_active_camera_count():
-    """How many camera threads are currently configured"""
-    return cameras_collection.count_documents({"active": True})
+# storage/database.py — add this function
+def set_encodings_dirty():
+    """Mark that encodings need reloading — persists across camera restarts"""
+    flags_collection.update_one(
+        {"key": "encodings_dirty"},
+        {"$set": {"key": "encodings_dirty", "value": True}},
+        upsert=True
+    )
+
+def clear_encodings_dirty():
+    """Called by camera thread after reloading"""
+    flags_collection.update_one(
+        {"key": "encodings_dirty"},
+        {"$set": {"value": False}}
+    )
+
+def is_encodings_dirty() -> bool:
+    """Called by camera thread on startup"""
+    doc = flags_collection.find_one({"key": "encodings_dirty"})
+    return doc.get("value", False) if doc else False

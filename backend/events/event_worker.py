@@ -7,7 +7,7 @@ import glob
 from storage.cloudinary_upload import upload_with_retry
 from storage.database import log_event
 from events.event_queue import event_queue
-from utils import logger 
+from utils.logger import logger 
 
 def cleanup_temp_files():
     temp_files = glob.glob("temp_*.jpg")

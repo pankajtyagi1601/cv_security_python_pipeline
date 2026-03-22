@@ -3,8 +3,8 @@ import requests
 import numpy as np
 import face_recognition
 import cv2
-import traceback
-from storage.database import save_authorized_people, get_active_camera_count
+from camera.camera_manager import get_active_camera_count
+from storage.database import save_authorized_people
 from recognition.face_recognizer import dlib_lock, signal_reload
 from utils.logger import logger
 
