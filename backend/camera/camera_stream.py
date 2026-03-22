@@ -88,6 +88,11 @@ def draw_annotations(frame, scaled_loactions, names, camera_id):
         
 def encode_frame(frame, quality=70):
     """Helper — encode numpy frame to JPEG bytes"""
+    # Ensure frame is valid before encoding
+    if frame is None or frame.size == 0:
+        return None
+    if frame.dtype != np.uint8:
+        frame = frame.astype(np.uint8)
     _, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
     return jpeg.tobytes()
 
@@ -171,8 +176,22 @@ def run_camera(camera_id:str, source, stop_flag: threading.Event):
             # ── Run recognition on this frame ────────────────
             # ── Preprocess ──────────────────────────────────────
             small_frame  = cv2.resize(frame, (0,0), fx=0.6, fy=0.6)
-            rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-        
+            # Ensure frame is 8-bit BGR before color conversion
+            # HTTP/ngrok streams sometimes return frames in unexpected formats
+            if small_frame.dtype != np.uint8:
+                small_frame = small_frame.astype(np.uint8)
+
+            # Handle both grayscale and BGRA frames from HTTP streams
+            if len(small_frame.shape) == 2:
+                # Grayscale → convert to RGB
+                rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_GRAY2RGB)
+            elif small_frame.shape[2] == 4:
+                # BGRA → convert to RGB
+                rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGRA2RGB)
+            else:
+                # Normal BGR → convert to RGB
+                rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+
             # ── Recognize ───────────────────────────────────────
             locations, names = recognize_faces(rgb_frame, known_encodings, known_names)
             
@@ -211,7 +230,9 @@ def run_camera(camera_id:str, source, stop_flag: threading.Event):
             else:
                 if time.time() - last_detection_time > ANNOTATION_PERSIST:
                     last_annotated = None
-                    buffer.update(camera_id, encode_frame(frame))
+                    jpeg = encode_frame(frame)
+                    if jpeg:
+                        buffer.update(camera_id, jpeg)
                 else:
                     buffer.update(camera_id, last_annotated if last_annotated else encode_frame(frame))
         
@@ -224,7 +245,9 @@ def run_camera(camera_id:str, source, stop_flag: threading.Event):
             else:
                 # No recent detection — show raw frame
                 last_annotated = None
-                buffer.update(camera_id, encode_frame(frame))
+                jpeg = encode_frame(frame)
+                if jpeg:
+                    buffer.update(camera_id, jpeg)
     
     # Clean exit
     cap.release()
