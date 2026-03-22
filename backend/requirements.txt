@@ -8,3 +8,4 @@ redis
 requests
 flask
 flask-cors
+waitress

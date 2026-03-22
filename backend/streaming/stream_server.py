@@ -1,4 +1,4 @@
-import cv2, time, threading
+import os, time, threading
 from flask import Flask, Response, jsonify
 from flask_cors import CORS
 from streaming.frame_buffer import buffer
@@ -58,16 +58,27 @@ def health():
 
 def start_stream_server(host="0.0.0.0", port=5000):
     """Run Flask in its own daemon thread so it doesn't block main.py"""
-    thread = threading.Thread(
-        target=lambda: app.run(
-            host=host,
-            port=port,
-            debug=False,        # must be False — debug mode conflicts with threading
-            threaded=True,      # handle multiple camera streams simultaneously
-            use_reloader=False  # must be False — reloader conflicts with our threads
-        ),
-        daemon=True
-    )
+    # Cloud platforms (Railway, Render) set PORT env var dynamically
+    port = int(os.getenv("PORT", 5000))
     
+    try:
+        from waitress import serve
+        thread = threading.Thread(
+            target=lambda: serve(app, host="0.0.0.0", port=port),
+            daemon=True
+        )
+        logger.info(f"[Stream] Strating with waitress on port {port}")
+    except ImportError:
+        thread = threading.Thread(
+            target=lambda: app.run(
+                host="0.0.0.0",
+                port=port,
+                debug=False,        # must be False — debug mode conflicts with threading
+                threaded=True,      # handle multiple camera streams simultaneously
+                use_reloader=False  # must be False — reloader conflicts with our threads
+            ),
+            daemon=True
+        )
+        logger.warning(f"[Stream] waitress not found - using Flask dev server on port {port}")
     thread.start()
-    logger.info(f"[Stream] Server started on http://{host}:{port}")
+    logger.info(f"[Stream] Server started on {port}")
