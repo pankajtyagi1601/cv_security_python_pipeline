@@ -1,9 +1,4 @@
 # requirements.txt
---extra-index-url https://pypi.org/simple/
-
-# Install pre-built dlib first — avoids compiling from source (needs 8GB RAM)
-dlib==19.24.6
-
 opencv-python-headless
 face-recognition
 numpy
