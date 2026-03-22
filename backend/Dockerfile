@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Only runtime dependencies (no build tools needed anymore)
+# Install runtime dependencies only (no build tools)
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -12,17 +12,37 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Copy requirements first for better caching
 COPY requirements.txt .
 
-# Upgrade pip (important for wheel detection)
+# Upgrade pip
 RUN pip install --upgrade pip
 
-# Install prebuilt dlib (NO compilation)
+# Install prebuilt dlib (no compilation)
 RUN pip install --no-cache-dir --only-binary=:all: dlib-bin==19.24.2.post1
 
-# Install remaining dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install face-recognition WITHOUT dependencies (to avoid dlib conflict)
+RUN pip install --no-cache-dir --no-deps face-recognition==1.3.0
 
+# Install missing dependency manually
+RUN pip install --no-cache-dir face-recognition-models
+
+# Install remaining dependencies
+RUN pip install --no-cache-dir \
+    opencv-python-headless \
+    numpy \
+    pymongo \
+    python-dotenv \
+    cloudinary \
+    redis \
+    requests \
+    flask \
+    flask-cors \
+    waitress \
+    certifi
+
+# Copy project files
 COPY . .
 
+# Start app
 CMD ["python", "main.py"]
