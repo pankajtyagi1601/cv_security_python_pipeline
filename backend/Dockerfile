@@ -18,13 +18,13 @@ COPY requirements.txt .
 # Upgrade pip
 RUN pip install --upgrade pip
 
-# Install prebuilt dlib (no compilation)
+# Install dlib (prebuilt binary)
 RUN pip install --no-cache-dir --only-binary=:all: dlib-bin==19.24.2.post1
 
-# Install face-recognition WITHOUT pulling dlib again
-RUN pip install --no-cache-dir --no-deps face-recognition==1.3.0
+# Install face-recognition WITH dependencies (FIXED)
+RUN pip install --no-cache-dir face-recognition==1.3.0
 
-# Install remaining dependencies
+# Install other dependencies
 RUN pip install --no-cache-dir \
     opencv-python-headless \
     numpy \
@@ -40,5 +40,7 @@ RUN pip install --no-cache-dir \
     Pillow
 
 COPY . .
+
+EXPOSE 10000
 
 CMD ["python", "main.py"]
