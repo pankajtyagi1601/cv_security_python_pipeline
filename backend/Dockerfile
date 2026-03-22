@@ -21,11 +21,8 @@ RUN pip install --upgrade pip
 # Install prebuilt dlib (no compilation)
 RUN pip install --no-cache-dir --only-binary=:all: dlib-bin==19.24.2.post1
 
-# Install face-recognition WITHOUT dependencies (to avoid dlib conflict)
+# Install face-recognition WITHOUT pulling dlib again
 RUN pip install --no-cache-dir --no-deps face-recognition==1.3.0
-
-# Install missing dependency manually
-RUN pip install --no-cache-dir face-recognition-models
 
 # Install remaining dependencies
 RUN pip install --no-cache-dir \
@@ -39,10 +36,9 @@ RUN pip install --no-cache-dir \
     flask \
     flask-cors \
     waitress \
-    certifi
+    certifi \
+    Pillow
 
-# Copy project files
 COPY . .
 
-# Start app
 CMD ["python", "main.py"]

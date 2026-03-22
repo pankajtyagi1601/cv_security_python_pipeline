@@ -11,3 +11,4 @@ flask
 flask-cors
 waitress
 certifi
+Pillow
