@@ -1,6 +1,5 @@
 # requirements.txt
 opencv-python-headless
-face-recognition
 numpy
 pymongo
 python-dotenv
