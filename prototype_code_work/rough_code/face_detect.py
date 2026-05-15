@@ -2,7 +2,7 @@ import cv2
 import face_recognition
 # import numpy as np
 
-cap1 = cv2.VideoCapture(1) # for webcam
+cap1 = cv2.VideoCapture(0) # for webcam
 # cap2 = cv2.VideoCapture("http://10.166.199.35:4747/video") # for IP camera
 
 while True:
